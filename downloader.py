@@ -1,17 +1,17 @@
 from yt_dlp import YoutubeDL, DownloadError
 
 
-def download_video(url):
-    
-    yt_opts ={
-        "format":"bv+ba/b"
-    }
+def download_video(url, format_id=None):
+    chosen_format = "bv+ba/b" if format_id is None else f"{format_id}+ba"
+
+    yt_opts = { "format": chosen_format}
     try:
-        with YoutubeDL(yt_opts) as ydl:
+         with YoutubeDL(yt_opts) as ydl:
             ydl.download([url])
             return "Download Completed!"
     except DownloadError:
         return "Download Error, Invalid URL. Please Insert Correct url"
+    
     
 def get_url_info(url):
       try:
@@ -28,8 +28,8 @@ def get_url_info(url):
             return url_info
     
       except DownloadError:
-        return {"Title": None, "Duration": None, "error":"Invalid URL or unable to fetch video info"}
-
+        return {"error": "Invalid URL or unable to fetch video info"}
+      
 def get_video_format(url):
     try:
          with YoutubeDL() as ydl:
@@ -46,10 +46,17 @@ def get_video_format(url):
             return videos
 
     except DownloadError:
-        return "error, unable to fetch formats"
-
+        return []
 
 if __name__ == "__main__":
-    link = "https://www.youtube.com/watch?v=WwKS_WD2kTc4"
+    link = "https://www.youtube.com/watch?v=wKS_WD2kTc4"
     print(get_video_format(link))
+
+    vid_resolution = input("Pick the format id you want to download (leave blank if highest settings)")
+
+    print(download_video(link,None)) if vid_resolution == "" else  print(download_video(link,vid_resolution))
+       
+
+
    
+    
