@@ -42,15 +42,35 @@ def get_video_format(url):
                     video_formats.append(fmt)
             videos=[]
             for vformat in video_formats:
-                videos.append((vformat["format_id"], vformat.get("resolution")))
+                videos.append((vformat["format_id"], vformat.get("resolution"), vformat.get("height")))
             return videos
 
     except DownloadError:
         return []
 
+def get_top_resolution(video_formats, limit=3):
+    sorted_formats = sorted(video_formats, key=lambda item: item[2], reverse=True)
+
+    seen_heights = set()
+    top_formats = []
+
+    for fmt in sorted_formats:
+        height = fmt[2]
+        if height not in seen_heights:
+            seen_heights.add(height)
+            top_formats.append(fmt)
+        if len(top_formats) == limit:
+            break
+
+    return top_formats
+
+
 if __name__ == "__main__":
     link = "https://www.youtube.com/watch?v=wKS_WD2kTc4"
-    print(get_video_format(link))
+
+    formats = get_video_format(link)
+    top3 = get_top_resolution(formats)
+    print(top3)
 
     vid_resolution = input("Pick the format id you want to download (leave blank if highest settings)")
 
