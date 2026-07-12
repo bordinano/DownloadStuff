@@ -12,7 +12,6 @@ def download_video(url, format_id=None):
     except DownloadError:
         return "Download Error, Invalid URL. Please Insert Correct url"
     
-    
 def get_url_info(url):
       try:
         with YoutubeDL() as ydl:
@@ -65,16 +64,35 @@ def get_top_resolution(video_formats, limit=3):
     return top_formats
 
 
+def download_audio(url):
+
+    yt_opts={
+        "format" : "ba",
+        "postprocessors" : [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec" : "mp3"
+        }]
+    }
+    try:
+        with YoutubeDL(yt_opts) as ydl:
+            ydl.download([url])
+            return "Download Completed!"
+    except DownloadError:
+        return "Download Error, Invalid URL. Please Insert Correct url"
+
+
 if __name__ == "__main__":
     link = "https://www.youtube.com/watch?v=wKS_WD2kTc4"
 
-    formats = get_video_format(link)
-    top3 = get_top_resolution(formats)
-    print(top3)
+    print(download_audio(link))
 
-    vid_resolution = input("Pick the format id you want to download (leave blank if highest settings)")
+    # formats = get_video_format(link)
+    # top3 = get_top_resolution(formats)
+    # print(top3)
 
-    print(download_video(link,None)) if vid_resolution == "" else  print(download_video(link,vid_resolution))
+    # vid_resolution = input("Pick the format id you want to download (leave blank if highest settings)")
+
+    # print(download_video(link,None)) if vid_resolution == "" else  print(download_video(link,vid_resolution))
        
 
 
