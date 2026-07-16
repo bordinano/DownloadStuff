@@ -1,17 +1,26 @@
 from yt_dlp import YoutubeDL, DownloadError
 import os
 
-def download_video(url, format_id=None):
+
+def my_progress_hook(status):
+    if status.get("status") == "downloading":
+        print(status.get("_percent_str"))
+    elif status.get("status") == "finished":
+        print("Download finished, now processing...")
+
+def download_video(url, format_id=None, progress_hook = None):
     chosen_format = "bv+ba/b" if format_id is None else f"{format_id}+ba"
 
     yt_opts = { "format": chosen_format}
+    if progress_hook is not None:
+        yt_opts["progress_hooks"] = [progress_hook]
     try:
          with YoutubeDL(yt_opts) as ydl:
             ydl.download([url])
             return "Download Completed!"
     except DownloadError:
         return "Download Error, Invalid URL. Please Insert Correct url"
-    
+
 def get_url_info(url):
       try:
         with YoutubeDL() as ydl:
@@ -97,7 +106,7 @@ def get_playlist_info(url):
             else:
                 minute =deets["duration"]//60
                 second = deets["duration"]%60
-                title = deets["title"]
+                title = deets.get("title", "Unknown Title")
                 vid_info = {
                     "title" : title,
                     "duration" : f"{minute}:{second:02}",
@@ -125,13 +134,12 @@ def download_playlist(url):
 
 
 
+
 if __name__ == "__main__":
-    link = "https://www.youtube.com/playlist?list=PLFwiwtqJ9Si_uR82Q3LoALjDwEI97a6Cn"
-  
-    results = download_playlist(link)
-    for r in results:
-        print(r)
+    link ="https://www.youtube.com/watch?v=2_opjVlYhi4"
+    print(download_video(link,progress_hook=my_progress_hook))
        
+
 
 
    
