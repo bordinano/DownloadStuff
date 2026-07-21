@@ -72,7 +72,7 @@ def get_top_resolution(video_formats, limit=3):
 
     return top_formats
 
-def download_audio(url):
+def download_audio(url,progress_hook=None):
 
     yt_opts={
         "format" : "ba",
@@ -81,6 +81,8 @@ def download_audio(url):
             "preferredcodec" : "mp3"
         }]
     }
+    if progress_hook is not None:
+        yt_opts["progress_hooks"]=[progress_hook]
     try:
         with YoutubeDL(yt_opts) as ydl:
             ydl.download([url])
