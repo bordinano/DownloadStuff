@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from tkinter import filedialog
 from downloader import (
     get_url_info,
     get_video_format,
@@ -10,9 +11,9 @@ import threading
 
 color_inactive = "blue"
 color_active = "green"
-dynamic_buttons = []
+dynamic_widgets = []
 selected_mode = None
-
+selected_folder = None
 ctk.set_default_color_theme("blue")
 
 
@@ -22,9 +23,7 @@ def update_info_label():
     if "error" in result:
         label.configure(text=result["error"])
     else:
-        label.configure(
-            text=f"Title: {result['Title']}, \nDuration: {result['Duration']}"
-        )
+        label.configure(text="")
     return url, result
 
 
@@ -32,40 +31,70 @@ def fetch_mp4info():
 
     url, result = update_info_label()
 
-    for btn in dynamic_buttons:
+    for btn in dynamic_widgets:
         btn.destroy()
-    dynamic_buttons.clear()
+    dynamic_widgets.clear()
 
     if "error" not in result:
         url_format = get_video_format(url)
         top_resolution = get_top_resolution(url_format)
+        card = ctk.CTkFrame(frame, width=260, height=310, fg_color="white")
+        card.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
+        dynamic_widgets.append(card)
+
+        info_label = ctk.CTkLabel(
+            card,
+            text=f"Title: {result['Title']}\nDuration: {result['Duration']}",
+            text_color="black",
+            wraplength=240,
+            justify="left"
+        )
+        info_label.pack(pady=10, padx=10)
         for index, fmt in enumerate(top_resolution):
             format_id = fmt[0]
             resolution = fmt[1]
             btn = ctk.CTkButton(
-                frame,
+                card,
                 text=resolution,
-                command=lambda fid=format_id: start_download_video(url, fid)
+                width=70,
+                command=lambda fid=format_id: start_download_video(url, fid),
             )
 
-            btn.place(relx=0.2 + (index * 0.3), rely=0.6, anchor=ctk.CENTER)
-            dynamic_buttons.append(btn)
+            btn.pack(side="left", padx=5, pady=10)
 
 
 def fetch_mp3info():
 
     url, result = update_info_label()
 
-    for a_btn in dynamic_buttons:
+    for a_btn in dynamic_widgets:
         a_btn.destroy()
-    dynamic_buttons.clear()
+    dynamic_widgets.clear()
 
     if "error" not in result:
-        btn = ctk.CTkButton(
-            frame, text="Download Mp3", command=lambda: start_download_audio(url)
+        card = ctk.CTkFrame(frame, width=380, height=160, fg_color="white")
+        card.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
+        dynamic_widgets.append(card)
+
+        top_row = ctk.CTkFrame(card, fg_color="white")
+        top_row.pack(fill="x", pady=10, padx=10)
+
+        info_label = ctk.CTkLabel(
+            top_row,
+            text=f"Title: {result['Title']}\nDuration: {result['Duration']}",
+            text_color="black",
+            wraplength=240,
+            justify="left",
         )
-        btn.place(relx=0.5, rely=0.6, anchor=ctk.CENTER)
-        dynamic_buttons.append(btn)
+        info_label.pack(side="left")
+
+        btn = ctk.CTkButton(
+            top_row,
+            width=30,
+            text="Download",
+            command=lambda: start_download_audio(url),
+        )
+        btn.pack(side="right",padx=10)
 
 
 def box_callback(button_number):
@@ -92,19 +121,27 @@ def conversion():
 def start_download_video(url, fid):
     progress_bar.set(0)
     progress_bar.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
-    
+
     def run_download():
-        result = download_video(url, fid, progress_hook=gui_progress_hook)
+        result = download_video(
+            url, fid, progress_hook=gui_progress_hook, download_path=selected_folder
+        )
         status_label.configure(text=result)
+
     thread = threading.Thread(target=run_download)
     thread.start()
+
 
 def start_download_audio(url):
     progress_bar.set(0)
     progress_bar.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
+
     def run_download():
-        result = download_audio(url, progress_hook=gui_progress_hook)
+        result = download_audio(
+            url, progress_hook=gui_progress_hook, download_path=selected_folder
+        )
         status_label.configure(text=result)
+
     thread = threading.Thread(target=run_download)
     thread.start()
 
@@ -117,13 +154,20 @@ def gui_progress_hook(status):
         progress_bar.set(1)
 
 
+def select_folder():
+    global selected_folder
+    folder = filedialog.askdirectory()
+    if folder != "":
+        selected_folder = folder
+
+
 app = ctk.CTk()
 app.title("Youtube Downloader")
-app.geometry("500x400")
+app.geometry("480x650")
 
 
 frame = ctk.CTkFrame(
-    app, width=300, height=500, fg_color="blue", border_color="red", border_width=3
+    app, width=440, height=610, fg_color="blue", border_color="red", border_width=3
 )
 frame.pack(padx=20, pady=20)
 
@@ -158,5 +202,8 @@ progress_bar = ctk.CTkProgressBar(frame)
 progress_bar.set(0)
 progress_bar.place_forget()
 
+
+folder_btn = ctk.CTkButton(frame, text="Choose Folder", command=select_folder)
+folder_btn.place(relx=0.5, rely=0.3, anchor=ctk.CENTER)
 
 app.mainloop()
