@@ -138,12 +138,18 @@ def download_playlist(url):
         result.append(vid_info)
     return result
     
-
-
-
+def is_playlist(url):
+    try:
+        ydl_opts ={"extract_flat": True}
+        with YoutubeDL(ydl_opts)  as ydl:
+            info = ydl.extract_info(url,download=False)
+        return info.get("_type") == "playlist"
+    except DownloadError:
+        return False
+            
 if __name__ == "__main__":
-    link ="https://www.youtube.com/watch?v=2_opjVlYhi4"
-    print(download_video(link,progress_hook=my_progress_hook))
+    link ="https://www.youtube.com/playlist?list=PLl578ZPbYIlFcSxuka8Km37VgbUYUWI5p"
+    print(is_playlist(link))
        
 
 
