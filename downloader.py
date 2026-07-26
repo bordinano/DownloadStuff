@@ -1,4 +1,4 @@
-from yt_dlp import YoutubeDL, DownloadError
+from yt_dlp import YoutubeDL, DownloadError 
 import os
 
 
@@ -8,12 +8,14 @@ def my_progress_hook(status):
     elif status.get("status") == "finished":
         print("Download finished, now processing...")
 
-def download_video(url, format_id=None, progress_hook = None):
+def download_video(url, format_id=None, progress_hook = None, download_path = None):
     chosen_format = "bv+ba/b" if format_id is None else f"{format_id}+ba"
 
     yt_opts = { "format": chosen_format}
     if progress_hook is not None:
         yt_opts["progress_hooks"] = [progress_hook]
+    if download_path is not None:
+        yt_opts["outtmpl"] = f"{download_path}/%(title)s.%(ext)s"
     try:
          with YoutubeDL(yt_opts) as ydl:
             ydl.download([url])
@@ -72,7 +74,7 @@ def get_top_resolution(video_formats, limit=3):
 
     return top_formats
 
-def download_audio(url,progress_hook=None):
+def download_audio(url,progress_hook=None, download_path = None):
 
     yt_opts={
         "format" : "ba",
@@ -83,6 +85,8 @@ def download_audio(url,progress_hook=None):
     }
     if progress_hook is not None:
         yt_opts["progress_hooks"]=[progress_hook]
+    if download_path is not None:
+        yt_opts["outtmpl"] = f"{download_path}/%(title)s.%(ext)s"
     try:
         with YoutubeDL(yt_opts) as ydl:
             ydl.download([url])
@@ -133,7 +137,7 @@ def download_playlist(url):
         }
         result.append(vid_info)
     return result
-
+    
 
 
 
