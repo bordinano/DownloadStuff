@@ -6,6 +6,8 @@ from downloader import (
     get_top_resolution,
     download_video,
     download_audio,
+    is_playlist,
+    get_playlist_info,
 )
 import threading
 
@@ -47,7 +49,7 @@ def fetch_mp4info():
             text=f"Title: {result['Title']}\nDuration: {result['Duration']}",
             text_color="black",
             wraplength=240,
-            justify="left"
+            justify="left",
         )
         info_label.pack(pady=10, padx=10)
         for index, fmt in enumerate(top_resolution):
@@ -94,7 +96,7 @@ def fetch_mp3info():
             text="Download",
             command=lambda: start_download_audio(url),
         )
-        btn.pack(side="right",padx=10)
+        btn.pack(side="right", padx=10)
 
 
 def box_callback(button_number):
@@ -111,8 +113,10 @@ def box_callback(button_number):
 
 
 def conversion():
-
-    if selected_mode == 1:
+    url = url_entry.get()
+    if is_playlist(url):
+        fetch_playlist_info(url)
+    elif selected_mode == 1:
         fetch_mp3info()
     elif selected_mode == 2:
         fetch_mp4info()
@@ -161,6 +165,46 @@ def select_folder():
         selected_folder = folder
 
 
+def fetch_playlist_info(url):
+    for widget in dynamic_widgets:
+        widget.destroy()
+    dynamic_widgets.clear()
+
+    videos = get_playlist_info(url)
+
+    scroll_frame = ctk.CTkScrollableFrame(
+        frame, width=380, height=300, fg_color="white"
+    )
+    scroll_frame.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
+    dynamic_widgets.append(scroll_frame)
+
+    for video in videos:
+        row = ctk.CTkFrame(
+            scroll_frame,
+            fg_color="white",
+            border_color="gray70",
+            border_width=2,
+            corner_radius=10,
+        )
+        row.pack(fill="x", pady=8, padx=8)
+
+        row_label = ctk.CTkLabel(
+            row,
+            text=f"{video['title']} ({video['duration']})",
+            text_color="black",
+            wraplength=200,
+            justify="left",
+        )
+        row_label.pack(side="left", padx=10, pady=15)
+        btn = ctk.CTkButton(
+            row,
+            width=30,
+            text="Download",
+            command=lambda: start_download_audio(url),
+        )
+        btn.pack(side="right", padx=10)
+
+
 app = ctk.CTk()
 app.title("Youtube Downloader")
 app.geometry("480x650")
@@ -205,5 +249,6 @@ progress_bar.place_forget()
 
 folder_btn = ctk.CTkButton(frame, text="Choose Folder", command=select_folder)
 folder_btn.place(relx=0.5, rely=0.3, anchor=ctk.CENTER)
+
 
 app.mainloop()
