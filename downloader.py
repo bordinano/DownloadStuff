@@ -1,4 +1,4 @@
-from yt_dlp import YoutubeDL, DownloadError 
+from yt_dlp import YoutubeDL, DownloadError
 import os
 
 
@@ -8,55 +8,62 @@ def my_progress_hook(status):
     elif status.get("status") == "finished":
         print("Download finished, now processing...")
 
-def download_video(url, format_id=None, progress_hook = None, download_path = None):
+
+def download_video(url, format_id=None, progress_hook=None, download_path=None):
     chosen_format = "bv+ba/b" if format_id is None else f"{format_id}+ba"
 
-    yt_opts = { "format": chosen_format}
+    yt_opts = {"format": chosen_format}
     if progress_hook is not None:
         yt_opts["progress_hooks"] = [progress_hook]
     if download_path is not None:
         yt_opts["outtmpl"] = f"{download_path}/%(title)s.%(ext)s"
     try:
-         with YoutubeDL(yt_opts) as ydl:
+        with YoutubeDL(yt_opts) as ydl:
             ydl.download([url])
             return "Download Completed!"
     except DownloadError:
         return "Download Error, Invalid URL. Please Insert Correct url"
 
+
 def get_url_info(url):
-      try:
+    try:
         with YoutubeDL() as ydl:
-            info = ydl.extract_info(url,download=False)
-            
-            Title =  info["title"]
-            minute = info["duration"]//60
-            second = info["duration"]%60
-            url_info = {
-                "Title": Title,
-                "Duration": f"{minute}:{second:02}"
-            }
+            info = ydl.extract_info(url, download=False)
+
+            Title = info["title"]
+            minute = info["duration"] // 60
+            second = info["duration"] % 60
+            url_info = {"Title": Title, "Duration": f"{minute}:{second:02}"}
             return url_info
-    
-      except DownloadError:
+
+    except DownloadError:
         return {"error": "Invalid URL or unable to fetch video info"}
-      
+
+
 def get_video_format(url):
     try:
-         with YoutubeDL() as ydl:
-            info = ydl.extract_info(url,download=False)
+        with YoutubeDL() as ydl:
+            info = ydl.extract_info(url, download=False)
             formats = info["formats"]
-    
-            video_formats= []
+
+            video_formats = []
             for fmt in formats:
-                if fmt.get("vcodec") != 'none':
+                if fmt.get("vcodec") != "none":
                     video_formats.append(fmt)
-            videos=[]
+            videos = []
             for vformat in video_formats:
-                videos.append((vformat["format_id"], vformat.get("resolution"), vformat.get("height")))
+                videos.append(
+                    (
+                        vformat["format_id"],
+                        vformat.get("resolution"),
+                        vformat.get("height"),
+                    )
+                )
             return videos
 
     except DownloadError:
         return []
+
 
 def get_top_resolution(video_formats, limit=3):
     sorted_formats = sorted(video_formats, key=lambda item: item[2], reverse=True)
@@ -74,17 +81,15 @@ def get_top_resolution(video_formats, limit=3):
 
     return top_formats
 
-def download_audio(url,progress_hook=None, download_path = None):
 
-    yt_opts={
-        "format" : "ba",
-        "postprocessors" : [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec" : "mp3"
-        }]
+def download_audio(url, progress_hook=None, download_path=None):
+
+    yt_opts = {
+        "format": "ba",
+        "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}],
     }
     if progress_hook is not None:
-        yt_opts["progress_hooks"]=[progress_hook]
+        yt_opts["progress_hooks"] = [progress_hook]
     if download_path is not None:
         yt_opts["outtmpl"] = f"{download_path}/%(title)s.%(ext)s"
     try:
@@ -94,65 +99,64 @@ def download_audio(url,progress_hook=None, download_path = None):
     except DownloadError:
         return "Download Error, Invalid URL. Please Insert Correct url"
 
+
 def get_playlist_info(url):
-    ydl_opts = {"extract_flat":True}
+    ydl_opts = {"extract_flat": True}
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url,download=False)
+            info = ydl.extract_info(url, download=False)
 
-        playlists=[]
+        playlists = []
         for deets in info["entries"]:
             if deets.get("duration") is None:
-                 vid_info = {
-                    "title" : deets.get("title","Unavailable") ,
-                    "duration" : "Unavailable",
-                    "url" : deets.get("url", "Unavailable")
+                vid_info = {
+                    "title": deets.get("title", "Unavailable"),
+                    "duration": "Unavailable",
+                    "url": deets.get("url", "Unavailable"),
                 }
-                 playlists.append(vid_info)
+                playlists.append(vid_info)
             else:
-                minute =deets["duration"]//60
-                second = deets["duration"]%60
+                minute = deets["duration"] // 60
+                second = deets["duration"] % 60
                 title = deets.get("title", "Unknown Title")
                 vid_info = {
-                    "title" : title,
-                    "duration" : f"{minute}:{second:02}",
-                    "url" : deets["url"]
+                    "title": title,
+                    "duration": f"{minute}:{second:02}",
+                    "url": deets["url"],
                 }
                 playlists.append(vid_info)
 
         return playlists
-           
-    
+
     except DownloadError:
         return []
 
-def download_playlist(url):
+
+def download_playlist(url, audio_mode=False):
     videos = get_playlist_info(url)
-    result =[]
+    result = []
     for video in videos:
-        if video["url"] is None or video["url"]=="Unavailable":
+        if video["url"] is None or video["url"] == "Unavailable":
             continue
-        vid_info={
-            "title" : video.get("title"), "result" :  download_video(video["url"])
-        }
+        if audio_mode:
+            download_result = download_audio(video["url"])
+        else:
+            download_result = download_video(video["url"])
+        vid_info = {"title": video.get("title"), "result": download_result}
         result.append(vid_info)
     return result
-    
+
+
 def is_playlist(url):
     try:
-        ydl_opts ={"extract_flat": True}
-        with YoutubeDL(ydl_opts)  as ydl:
-            info = ydl.extract_info(url,download=False)
+        ydl_opts = {"extract_flat": True}
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
         return info.get("_type") == "playlist"
     except DownloadError:
         return False
-            
+
+
 if __name__ == "__main__":
-    link ="https://www.youtube.com/playlist?list=PLl578ZPbYIlFcSxuka8Km37VgbUYUWI5p"
+    link = "https://www.youtube.com/playlist?list=PLl578ZPbYIlFcSxuka8Km37VgbUYUWI5p"
     print(is_playlist(link))
-       
-
-
-
-   
-    

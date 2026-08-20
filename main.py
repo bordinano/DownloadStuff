@@ -114,15 +114,20 @@ def box_callback(button_number):
 
 def conversion():
     url = url_entry.get()
-    if is_playlist(url):
-        fetch_playlist_info(url)
-    elif selected_mode == 1:
-        fetch_mp3info()
+    playlist = is_playlist(url)
+    if selected_mode == 1:
+        if playlist:
+            fetch_playlist_info(url, audio_mode=True)
+        else:
+            fetch_mp3info()
     elif selected_mode == 2:
-        fetch_mp4info()
+        if playlist:
+            fetch_playlist_info(url, audio_mode=False)
+        else:
+            fetch_mp4info()
 
 
-def start_download_video(url, fid):
+def start_download_video(url, fid=None):
     progress_bar.set(0)
     progress_bar.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
 
@@ -149,6 +154,8 @@ def start_download_audio(url):
     thread = threading.Thread(target=run_download)
     thread.start()
 
+def start_download_playlist(url,audio_mode):
+    progress_bar
 
 def gui_progress_hook(status):
     if status.get("status") == "downloading":
@@ -165,17 +172,16 @@ def select_folder():
         selected_folder = folder
 
 
-def fetch_playlist_info(url):
+def fetch_playlist_info(url, audio_mode):
     for widget in dynamic_widgets:
         widget.destroy()
     dynamic_widgets.clear()
-
     videos = get_playlist_info(url)
 
     scroll_frame = ctk.CTkScrollableFrame(
         frame, width=380, height=300, fg_color="white"
     )
-    scroll_frame.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
+    scroll_frame.place(relx=0.5, rely=0.65, anchor=ctk.CENTER)
     dynamic_widgets.append(scroll_frame)
 
     for video in videos:
@@ -196,13 +202,37 @@ def fetch_playlist_info(url):
             justify="left",
         )
         row_label.pack(side="left", padx=10, pady=15)
-        btn = ctk.CTkButton(
-            row,
-            width=30,
-            text="Download",
-            command=lambda: start_download_audio(url),
+        if audio_mode:
+            btn = ctk.CTkButton(
+                row,
+                width=30,
+                text="Download",
+                command=lambda vurl=video["url"]: start_download_audio(vurl),
+            )
+            btn.pack(side="right", padx=10)
+
+        else:
+            btn = ctk.CTkButton(
+                row,
+                width=30,
+                text="Download",
+                command=lambda vurl=video["url"]: start_download_video(vurl, None),
+            )
+            btn.pack(side="right", padx=10)
+    if audio_mode:
+        download_all = ctk.CTkButton(
+            frame,
+            text="Download All",
+            command=lambda vurl=video["url"]: start_download_audio(vurl),
         )
-        btn.pack(side="right", padx=10)
+        download_all.pack()
+    else:
+        download_all = ctk.CTkButton(
+            frame,
+            text="Download All",
+            command=lambda vurl=video["url"]: start_download_video(vurl, None),
+        )
+        download_all.pack()
 
 
 app = ctk.CTk()
